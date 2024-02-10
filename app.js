@@ -9,10 +9,10 @@ const port = 4000;
 //Make connection from DB
 mongoose.connect("mongodb://localhost:27017/apiDB");
 //make Schema and model for Article in db
-const articleSchema = {
+const articleSchema = new mongoose.Schema({
   title: String,
   content: String,
-};
+});
 const Article = mongoose.model("Article", articleSchema);
 
 //Use ejs for Templeting
@@ -29,7 +29,9 @@ app.use(express.static("public"));
 //code playground
 //start with get request route
 //chained route implemented
-app.route("/articles")
+///General Route//////////////////
+app
+  .route("/articles")
   .get((req, res) => {
     Article.find()
       .then((result) => {
@@ -68,14 +70,58 @@ app.route("/articles")
       });
   });
 
-  //get specific route
-  app.get("/articles/:articleTitle", (req, res) => {
-      Article.findOne({title: req.params.articleTitle}).then((result)=>{
+///////////////////////get specific route/////////////////////////////////////////////////////////////////
+app
+  .route("/articles/:articleTitle")
+  .get((req, res) => {
+    Article.findOne({ title: req.params.articleTitle })
+      .then((result) => {
         res.send(result);
-        console.log(result)
-      }).catch((err)=> console.log(err));
+        console.log(result);
+      })
+      .catch((err) => console.log(err));
   })
+  .delete((req, res) => {
+    Article.deleteOne({ title: req.params.articleTitle }).then((result) => {
+      if (result) {
+        console.log("successful Deleted");
+        res.send("Deleted Successful");
+      } else {
+        console.log("sNot Found");
+        res.send("Not Found");
+      }
+    });
+  })
+  .put((req, res) => {
+    Article.update(
+      { title: req.params.articleTitle },
+      {
+        title: req.params.title,
+        content: req.params.content,
+      }
+    )
+      .then(() => {
+        console.log("successful");
+        res.send("sucessfuld updated");
+      })
+      .catch((err) => {
+        console.log("there is err ${err}");
+        res.send("something went wrong ${err}");
+      });
+  })
+  .patch((req, res) => {
+    Article.updateOne(
+      { title: articleTitle },
+      {
+        $set: {
+          content: req.params.content,
+        },
+      }
+    );
+  });
 
+
+  
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
